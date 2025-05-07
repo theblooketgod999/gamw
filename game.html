@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Guess the Number Game</title>
+  <style>
+    body { 
+      font-family: Arial; 
+      text-align: center; 
+      margin-top: 50px; 
+      background: linear-gradient(135deg, #6EE7B7, #3B82F6); 
+      color: white;
+    }
+    input, button, select { 
+      padding: 10px; 
+      margin: 10px; 
+      font-size: 16px; 
+      border-radius: 10px; 
+      border: none;
+    }
+    button { background-color: #10B981; color: white; cursor: pointer; }
+    #lives, #score, #timer { font-size: 20px; margin: 10px; }
+    .flash {
+      animation: flashAnim 0.5s;
+    }
+    @keyframes flashAnim {
+      0% { background-color: yellow; }
+      100% { background: linear-gradient(135deg, #6EE7B7, #3B82F6); }
+    }
+    .avatar {
+      width: 100px;
+      border-radius: 50%;
+      border: 3px solid white;
+      margin-bottom: 10px;
+    }
+    table { margin: 0 auto; background: white; color: black; border-radius: 10px; padding: 10px; }
+    th, td { padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h1>🎯 Guess the Number!</h1>
+  <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Player" class="avatar">
+
+  <p>Select Player:
+    <select id="playerSelect" onchange="switchPlayer()">
+      <option value="You">You</option>
+      <option value="Player2">Player2</option>
+    </select>
+  </p>
+
+  <p>I'm thinking of a number between 1 and 100...</p>
+
+  <input type="number" id="guessInput" placeholder="Enter your guess">
+  <button onclick="checkGuess()">Guess</button>
+
+  <p id="result"></p>
+  <p id="lives">❤️ Lives: 5</p>
+  <p id="score">🏆 Score: 0</p>
+  <p id="timer">⏱️ Time Left: 30s</p>
+
+  <h2>🏅 Leaderboard</h2>
+  <table>
+    <thead>
+      <tr><th>Player</th><th>Score</th></tr>
+    </thead>
+    <tbody id="leaderboard">
+      <tr><td>You</td><td>0</td></tr>
+      <tr><td>Player2</td><td>0</td></tr>
+    </tbody>
+  </table>
+
+  <h2>🛒 Shop</h2>
+  <button onclick="buyLife()">Buy Extra Life (Cost: 20 pts)</button>
+
+  <audio id="correctSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+  <audio id="wrongSound" src="https://www.soundjay.com/button/beep-10.wav"></audio>
+
+  <script>
+    let secretNumber = Math.floor(Math.random() * 100) + 1;
+    let timeLeft = 30;
+    let timerInterval = setInterval(updateTimer, 1000);
+
+    let players = {
+      'You': { lives: 5, score: 0 },
+      'Player2': { lives: 5, score: 0 }
+    };
+
+    let currentPlayer = 'You';
+
+    function checkGuess() {
+      let userGuess = document.getElementById('guessInput').value;
+      let resultText = '';
+
+      document.body.classList.add('flash');
+      setTimeout(() => document.body.classList.remove('flash'), 500);
+
+      if (userGuess == secretNumber) {
+        resultText = '🎉 Correct! You guessed the number!';
+        players[currentPlayer].score += 10;
+        document.getElementById('correctSound').play();
+        updateLeaderboard();
+        resetGame();
+      } else {
+        players[currentPlayer].lives--;
+        document.getElementById('wrongSound').play();
+
+        if (players[currentPlayer].lives == 0) {
+          resultText = '💀 Game Over! The number was ' + secretNumber + '. Click Guess to try again!';
+          resetGame();
+        } else if (userGuess < secretNumber) {
+          resultText = '🔼 Too low! Try again.';
+        } else {
+          resultText = '🔽 Too high! Try again.';
+        }
+      }
+
+      updateStats();
+      document.getElementById('result').textContent = resultText;
+    }
+
+    function resetGame() {
+      secretNumber = Math.floor(Math.random() * 100) + 1;
+      players[currentPlayer].lives = 5;
+      timeLeft = 30;
+      updateStats();
+      document.getElementById('timer').textContent = '⏱️ Time Left: ' + timeLeft + 's';
+    }
+
+    function updateStats() {
+      document.getElementById('lives').textContent = '❤️ Lives: ' + players[currentPlayer].lives;
+      document.getElementById('score').textContent = '🏆 Score: ' + players[currentPlayer].score;
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      document.getElementById('timer').textContent = '⏱️ Time Left: ' + timeLeft + 's';
+
+      if (timeLeft <= 0) {
+        document.getElementById('result').textContent = '⏰ Time\'s up! Game Over! The number was ' + secretNumber + '.';
+        resetGame();
+      }
+    }
+
+    function updateLeaderboard() {
+      let rows = '';
+      for (let player in players) {
+        rows += `<tr><td>${player}</td><td>${players[player].score}</td></tr>`;
+      }
+      document.getElementById('leaderboard').innerHTML = rows;
+    }
+
+    function switchPlayer() {
+      currentPlayer = document.getElementById('playerSelect').value;
+      updateStats();
+    }
+
+    function buyLife() {
+      if (players[currentPlayer].score >= 20) {
+        players[currentPlayer].score -= 20;
+        players[currentPlayer].lives++;
+        updateStats();
+        updateLeaderboard();
+        alert('🎉 You bought an extra life!');
+      } else {
+        alert('❌ Not enough points!');
+      }
+    }
+  </script>
+</body>
+</html>
